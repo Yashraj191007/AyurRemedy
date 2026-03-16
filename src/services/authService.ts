@@ -8,6 +8,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { UserProfile } from '../types';
+import { handleFirestoreError, OperationType } from './errorHandling';
 
 export const authService = {
   async signInWithGoogle(): Promise<UserProfile | null> {
@@ -22,11 +23,10 @@ export const authService = {
       try {
         snapshot = await getDoc(docRef);
       } catch (e) {
-        console.error("Error fetching user profile:", e);
-        throw e;
+        handleFirestoreError(e, OperationType.GET, `users/${user.uid}`);
       }
 
-      if (!snapshot.exists()) {
+      if (!snapshot!.exists()) {
         const profile: UserProfile = {
           uid: user.uid,
           email: user.email || '',
@@ -37,13 +37,12 @@ export const authService = {
         try {
           await setDoc(docRef, profile);
         } catch (e) {
-          console.error("Error creating user profile:", e);
-          throw e;
+          handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}`);
         }
         return profile;
       } else {
         // Update photoURL if it changed
-        const existing = snapshot.data() as UserProfile;
+        const existing = snapshot!.data() as UserProfile;
         if (existing.photoURL !== user.photoURL) {
           try {
             await setDoc(docRef, { photoURL: user.photoURL || '' }, { merge: true });
@@ -55,6 +54,9 @@ export const authService = {
         return existing;
       }
     } catch (error) {
+      if (error instanceof Error && error.message.includes('{')) {
+        throw error; // Already handled by handleFirestoreError
+      }
       console.error("Detailed Login Error:", error);
       throw error;
     }
@@ -70,7 +72,12 @@ export const authService = {
 
   async getUserProfile(uid: string): Promise<UserProfile | null> {
     const docRef = doc(db, 'users', uid);
-    const snapshot = await getDoc(docRef);
-    return snapshot.exists() ? (snapshot.data() as UserProfile) : null;
+    try {
+      const snapshot = await getDoc(docRef);
+      return snapshot.exists() ? (snapshot.data() as UserProfile) : null;
+    } catch (e) {
+      handleFirestoreError(e, OperationType.GET, `users/${uid}`);
+      return null;
+    }
   }
 };
