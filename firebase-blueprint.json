@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "remedy": {
+      "title": "Remedy",
+      "description": "A traditional Ayurvedic home remedy.",
+      "type": "object",
+      "properties": {
+        "remedyName": { "type": "string", "description": "Name of the remedy" },
+        "symptoms": { "type": "array", "items": { "type": "string" }, "description": "Symptoms this remedy treats" },
+        "ingredients": { "type": "array", "items": { "type": "string" }, "description": "List of ingredients" },
+        "preparationSteps": { "type": "string", "description": "Step-by-step preparation guide" },
+        "benefits": { "type": "string", "description": "Ayurvedic benefits and explanation" },
+        "precautions": { "type": "string", "description": "Safety precautions" },
+        "category": { "type": "string", "description": "Health category (e.g., Digestion, Cold)" },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard"], "description": "Preparation difficulty" },
+        "timeToTake": { "type": "string", "description": "Recommended time to consume" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["remedyName", "symptoms", "ingredients", "preparationSteps", "category"]
+    },
+    "user": {
+      "title": "User",
+      "description": "Application user profile.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "remedies": {
+      "schema": "remedy",
+      "description": "Collection of Ayurvedic remedies."
+    },
+    "users": {
+      "schema": "user",
+      "description": "User profiles and roles."
+    }
+  }
+}

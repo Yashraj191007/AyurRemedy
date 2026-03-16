@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-saffron: #FF9933;
+  --color-ayur-green: #2E7D32;
+  --color-ayur-cream: #FDFBF7;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-ayur-cream text-gray-900 font-sans;
+  }
+}
+
+.markdown-body h1 { @apply text-2xl font-bold mb-4 text-ayur-green; }
+.markdown-body h2 { @apply text-xl font-bold mb-3 text-ayur-green; }
+.markdown-body p { @apply mb-4 leading-relaxed; }
+.markdown-body ul { @apply list-disc pl-5 mb-4; }
+.markdown-body li { @apply mb-2; }
+

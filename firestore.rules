@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: remedies
+    // Fields:
+    //   - remedyName: string (required)
+    //   - symptoms: list (required)
+    //   - ingredients: list (required)
+    //   - preparationSteps: string (required)
+    //   - benefits: string
+    //   - precautions: string
+    //   - category: string (required)
+    //   - difficulty: string
+    //   - timeToTake: string
+    //   - createdAt: timestamp
+    //
+    // Collection: users
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - role: string (required, 'admin' or 'user')
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Non-recursive admin check (using token for bootstrap admin)
+    function isBootstrapAdmin() {
+      return isAuthenticated() &&
+             request.auth.token.email == "yashrajjagtap1910@gmail.com" &&
+             request.auth.token.email_verified == true;
+    }
+
+    // Database-backed admin check
+    function isDbAdmin() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin() || isDbAdmin();
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidRemedy(data) {
+      return data.remedyName is string && data.remedyName.size() > 0 && data.remedyName.size() < 200 &&
+             data.symptoms is list && data.symptoms.size() > 0 &&
+             data.ingredients is list && data.ingredients.size() > 0 &&
+             data.preparationSteps is string && data.preparationSteps.size() > 0 &&
+             data.category is string && data.category.size() > 0;
+    }
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid == request.auth.uid &&
+             data.email is string && data.role in ['admin', 'user'] &&
+             (data.displayName is string || !('displayName' in data)) &&
+             (data.photoURL is string || !('photoURL' in data));
+    }
+
+    // Remedies: Publicly readable, Admin writable
+    match /remedies/{remedyId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidRemedy(request.resource.data);
+    }
+
+    // Users: Owner readable/writable, Admin full access
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
+                    (request.resource.data.role == 'user' || isBootstrapAdmin());
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && 
+                    (request.resource.data.role == resource.data.role || isAdmin())) || isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

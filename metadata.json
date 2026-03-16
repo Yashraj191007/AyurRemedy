@@ -1,0 +1,5 @@
+{
+  "name": "AyurRemedy – Ancient Indian Home Remedies Finder",
+  "description": "A full-stack Ayurvedic home remedy finder based on Indian Knowledge Systems, featuring voice search and a comprehensive remedy database.",
+  "requestFramePermissions": ["microphone"]
+}
